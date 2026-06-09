@@ -1,7 +1,6 @@
 set tabstop=4
 set shiftwidth=4
 set splitright
-
 set clipboard=unnamedplus
 filetype plugin indent on
 syntax on
@@ -24,8 +23,8 @@ augroup END
 
 colorscheme default
 
-command! -nargs=* BR call RunBar(<q-args>)
-command! -nargs=* R  call RunProgram(<q-args>)
+command! -nargs=* -complete=file BR call RunBar(<q-args>)
+command! -nargs=* -complete=file R  call RunProgram(<q-args>)
 command! B  call RunBuild()
 
 function! s:OpenTerm(cmd, cwd)
@@ -87,15 +86,8 @@ function! RunBar(args)
   call s:OpenTerm(l:cmd, l:dir)
 endfunction
 
-function! RunBar()
+function! RunBuild()
   let l:dir = s:FindBuildDir()
   if empty(l:dir) | return | endif
-
-  let l:run_script = s:FindRunScript()
-
-  if !empty(l:run_script)
-    call s:OpenTerm('./build.sh && ' . shellescape(l:run_script), l:dir)
-  else
-    call s:OpenTerm('./build.sh && ../build/debug', l:dir)
-  endif
+  call s:OpenTerm('./build.sh', l:dir)
 endfunction
