@@ -2,29 +2,31 @@ set tabstop=4
 set shiftwidth=4
 set splitright
 
+set clipboard=unnamedplus
 filetype plugin indent on
 syntax on
 
 augroup MyHighlights
   autocmd!
-  autocmd ColorScheme * highlight Normal 	ctermfg=white
-  autocmd ColorScheme * highlight Comment 	ctermfg=grey
-  autocmd ColorScheme * highlight Constant 	ctermfg=red
-  autocmd ColorScheme * highlight Special 	ctermfg=magenta
-  autocmd ColorScheme * highlight PreProc	ctermfg=magenta
-  autocmd ColorScheme * highlight Type    	ctermfg=blue
-  autocmd ColorScheme * highlight Statement	ctermfg=yellow
-  autocmd ColorScheme * highlight Keyword 	ctermfg=yellow
-  autocmd ColorScheme * highlight Todo		ctermfg=black ctermbg=white
-  autocmd ColorScheme * highlight Search 	ctermfg=black ctermbg=white
-  autocmd ColorScheme * highlight Visual 	ctermfg=black ctermbg=white
+  autocmd ColorScheme * highlight Normal     ctermfg=white
+  autocmd ColorScheme * highlight Comment    ctermfg=grey
+  autocmd ColorScheme * highlight Constant   ctermfg=red
+  autocmd ColorScheme * highlight Special    ctermfg=magenta
+  autocmd ColorScheme * highlight PreProc    ctermfg=magenta
+  autocmd ColorScheme * highlight Type       ctermfg=blue
+  autocmd ColorScheme * highlight Statement  ctermfg=yellow
+  autocmd ColorScheme * highlight Keyword    ctermfg=yellow
+  autocmd ColorScheme * highlight Todo       ctermfg=black ctermbg=white
+  autocmd ColorScheme * highlight Search     ctermfg=black ctermbg=white
+  autocmd ColorScheme * highlight Visual     ctermfg=black ctermbg=white
   autocmd ColorScheme * highlight Identifier ctermfg=blue
 augroup END
-:colorscheme default
 
-command! BR call RunBar()
-command! B   call RunBuild()
-command! R   call RunProgram()
+colorscheme default
+
+command! -nargs=* BR call RunBar(<q-args>)
+command! -nargs=* R  call RunProgram(<q-args>)
+command! B  call RunBuild()
 
 function! s:OpenTerm(cmd, cwd)
   " Reuse existing terminal if possible
@@ -53,20 +55,47 @@ function! s:FindBuildDir()
   return fnamemodify(l:build, ':p:h')
 endfunction
 
-function! RunBuild()
-  let l:dir = s:FindBuildDir()
-  if empty(l:dir) | return | endif
-  call s:OpenTerm('./build.sh', l:dir)
+function! s:FindRunScript()
+  let l:run = findfile('run.sh', '.;')
+  if empty(l:run)
+    return ''
+  endif
+  return fnamemodify(l:run, ':p')
 endfunction
 
-function! RunProgram()
+function! RunProgram(args)
   let l:dir = s:FindBuildDir()
   if empty(l:dir) | return | endif
-  call s:OpenTerm('../build/debug', l:dir)
+
+  let l:cmd = '../build/debug'
+  if !empty(a:args)
+    let l:cmd .= ' ' . a:args
+  endif
+
+  call s:OpenTerm(l:cmd, l:dir)
+endfunction
+
+function! RunBar(args)
+  let l:dir = s:FindBuildDir()
+  if empty(l:dir) | return | endif
+
+  let l:cmd = './build.sh && ../build/debug'
+  if !empty(a:args)
+    let l:cmd .= ' ' . a:args
+  endif
+
+  call s:OpenTerm(l:cmd, l:dir)
 endfunction
 
 function! RunBar()
   let l:dir = s:FindBuildDir()
   if empty(l:dir) | return | endif
-  call s:OpenTerm('./build.sh && ../build/debug', l:dir)
+
+  let l:run_script = s:FindRunScript()
+
+  if !empty(l:run_script)
+    call s:OpenTerm('./build.sh && ' . shellescape(l:run_script), l:dir)
+  else
+    call s:OpenTerm('./build.sh && ../build/debug', l:dir)
+  endif
 endfunction
